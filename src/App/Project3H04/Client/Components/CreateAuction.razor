@@ -1,0 +1,90 @@
+﻿@using System.Security.Claims
+@inject NavigationManager NavManager
+@inject Services.VeilingService veilingService
+
+@using Blazored.FluentValidation
+
+<h3>Create auction</h3>
+@if (forKunstwerk == null || Model == null)
+{
+    <p>Loading ...</p>
+}
+else
+{
+    <div class="main">
+        <p>
+            Create auction for the following artwork: @forKunstwerk.Naam
+            <br />
+        </p>
+
+        <EditForm Model="@Model" OnValidSubmit="@CreateNewAuction">
+            <FluentValidationValidator/>
+            <ValidationSummary/>
+            <div class="form-group">
+                <label for="@Model.StartDatum">Start date</label>
+                <InputDate @bind-Value="@Model.StartDatum" class="form-control"/>
+            </div>
+            <div class="form-group">
+                <label for="@Model.EindDatum">End date</label>
+                <InputDate @bind-Value="@Model.EindDatum" class="form-control"/>
+            </div>
+            <div class="form-group">
+                <label for="@Model.MinPrijs">Minimum price</label>
+                <InputNumber @bind-Value="@Model.MinPrijs" class="form-control"/>
+            </div>
+            <button type="submit" class="btn btn-primary">
+                <span>Create</span>
+                @if (loading) {
+                    <TinySpinner/>
+                }
+            </button>
+            <button class="btn btn-secondary" @onclick="@NavigateBack">
+                <i class="fas fa-chevron-left"></i>
+                <span>Cancel</span>
+            </button>
+        </EditForm>
+    </div>
+
+    @if (isGelukt)
+    {
+        <p>Added auction</p>
+    }
+}
+
+
+@code {
+    [Parameter]
+    public Kunstwerk_DTO.Detail forKunstwerk { get; set; }
+    private Veiling_DTO Model { get; set; }
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationStateTask { get; set; }
+    private ClaimsPrincipal user;
+    private bool isGelukt = false;
+    private bool loading = false;
+
+
+    protected override async Task OnParametersSetAsync()
+    {
+        user = (await authenticationStateTask).User;
+        Model = new Veiling_DTO {
+            StartDatum = DateTime.UtcNow,
+            EindDatum = DateTime.UtcNow.AddDays(10),
+            MinPrijs = forKunstwerk.Prijs,
+            Kunstwerk = forKunstwerk
+        };
+    }
+
+    private async Task CreateNewAuction()
+    {
+        loading = true;
+
+        await veilingService.CreateVeilingAsync(Model);
+
+        isGelukt = true;
+        NavigateBack();
+    }
+
+    private void NavigateBack() {
+        NavManager.NavigateTo($"artworks/{forKunstwerk.Id}");
+    }
+}

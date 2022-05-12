@@ -1,0 +1,103 @@
+﻿@using System.Security.Claims
+@inject CartState cartState
+@inject IToastService toastService
+
+@if (Kunstwerk != null)
+{
+    <div class="container" style="margin-left: 0; padding-top: 10px">
+        <div class="row">
+            <div class="col-md-6">
+                <img src="@Kunstwerk.Fotos.First().Pad" alt="@Kunstwerk.Fotos.First().Pad" style="width: 100%; height:auto" />
+            </div>
+
+            <div class="col-md-6 kunstwerkdetailcontainer">
+                <h1 style="font-family: sans-serif">@Kunstwerk.Naam</h1>
+                    <a href="artists/@Kunstwerk.Kunstenaar.GebruikerId" style="text-decoration:none">
+                    <p> <span style="font-weight: bold">Artist</span> : @Kunstwerk.Kunstenaar.Gebruikersnaam</p>
+                    </a>
+                    <p><span style="font-weight: bold">Dimensions</span> : @Kunstwerk.Lengte x @Kunstwerk.Breedte x @Kunstwerk.Hoogte (in cm)</p>
+                    @if (Kunstwerk.Gewicht != default(decimal))
+                    {
+                        <p><span style="font-weight: bold">Weight</span> : @Kunstwerk.Gewicht kg</p>
+                    }
+                    <p class="subtitle" style="text-align: left; font-weight: bold">About</p>
+                    <p style="border: 1px thin grey; width: 100%; height: auto">@Kunstwerk.Beschrijving</p>
+                    <p><span style="font-weight: bold">Medium</span> : @Kunstwerk.Materiaal</p>
+                    @if (!Kunstwerk.IsVeilbaar)
+                    {
+                        <p style="font-size: 2rem; color: dimgray">€@Kunstwerk.Prijs</p>
+                    }
+                    <AuthorizeView>
+                        @if (Kunstwerk.IsVeilbaar)
+                        {
+                            <!--Veiling component-->
+                            <DetailArtworkBieden KunstwerkId="@Kunstwerk.Id" />
+                        }
+                        else
+                        {
+                            <!--Order button-->
+                            if (Kunstwerk.TeKoop)
+                            {
+                                <button data-test-id="orderbutton" class="btn btn-secondary ml-1" @onclick="AddToCart" disabled="@Check()">Order</button>
+                            }
+                        }
+                    </AuthorizeView>
+                    <!--Enkel als AUTH dit zien-->
+                    <AuthorizeView Roles="Kunstenaar, Administrator">
+                        <!--Dit mag enkel de kunstenaar eigenaar uiteraard-->
+                        @if (user.Identity.Name == Kunstwerk.Kunstenaar.Email || user.IsInRole("Administrator"))
+                        {
+                            <a class="btn btn-secondary" href="artworks/edit/@Kunstwerk.Id">Edit</a>
+                            <a class="btn btn-secondary" href="auction/@Kunstwerk.Id">Manage Auction</a>
+                        }
+                    </AuthorizeView>
+            </div>
+        </div>
+        <div class="row" style="padding-top: 20px; padding-bottom:10px">
+            @if (Kunstwerk.Fotos.Count > 1)
+            {
+                <div>
+                    <p style="text-align: left; font-weight: bold; padding-left: 10px">photos</p>
+                    @foreach (Foto_DTO foto in Kunstwerk.Fotos.Skip(1))
+                    {
+                        <img src="@foto.Pad" alt="@foto.Pad" width="250" height="250" style="padding-left: 10px;" />
+                    }
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public Kunstwerk_DTO.Detail Kunstwerk { get; set; }
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationStateTask { get; set; }
+    private ClaimsPrincipal user;
+    //public bool InCart = false;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        //userEmail = user.Identity.Name
+        user = (await authenticationStateTask).User;
+
+        Console.WriteLine(user.Identity.Name); //dit nog gwn
+        Console.WriteLine(Kunstwerk.Kunstenaar.Email + "kunstwerk kunstenaar email");
+    }
+
+    //public async Task<string> GetUserEmail() {
+    //    var user = (await authenticationStateTask).User;
+    //    return user.Identity.Name;
+    //}
+
+    public bool Check()
+    {
+        //checken op ID, anders ga niet !!!
+        return cartState.CheckCartItem(Kunstwerk.Id);
+    }
+
+    private void AddToCart()
+    {
+        cartState.AddKunstwerk(Kunstwerk);
+        toastService.ShowSuccess("Order successfully added to cart");
+    }
+}

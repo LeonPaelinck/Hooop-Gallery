@@ -1,0 +1,130 @@
+﻿@import url('open-iconic/font/css/open-iconic-bootstrap.min.css');
+@import url('https://fonts.googleapis.com/css2?family=Red+Hat+Display:wght@400;500;700;900&display=swap');
+
+
+:root {
+    --main-color-brown: rgba(191, 93, 74, 1);
+}
+
+html, body {
+    font-family: 'Red Hat Display';
+}
+
+artwork-text {
+    width: auto;
+    height: 6em;
+}
+
+p.artistname {
+    font-size: 1.2em;
+    font-weight: 500;
+    margin: 0;
+    margin-bottom: 1em;
+}
+
+p.artwork, p.price {
+    font-size: 1em;
+    font-weight: 300;
+    font-style: italic;
+    margin: 0;
+}
+
+p.black-style {
+    font-size: 1.25rem;
+    font-weight: 900;
+    white-space: nowrap;
+}
+
+p {
+    font-weight: 400;
+}
+
+.btn-dark {
+    background-color: black;
+}
+
+a, .btn-link {
+    color: #0366d6;
+}
+
+.btn-primary {
+    color: #fff;
+    background-color: #1b6ec2;
+    border-color: #1861ac;
+}
+
+.content {
+    padding-top: 1.1rem;
+}
+
+.valid.modified:not([type=checkbox]) {
+    outline: 1px solid #26b050;
+}
+
+.invalid {
+    outline: 1px solid red;
+}
+
+.validation-message {
+    color: red;
+}
+
+#blazor-error-ui {
+    background: lightyellow;
+    bottom: 0;
+    box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
+    display: none;
+    left: 0;
+    padding: 0.6rem 1.25rem 0.7rem 1.25rem;
+    position: fixed;
+    width: 100%;
+    z-index: 1000;
+}
+
+    #blazor-error-ui .dismiss {
+        cursor: pointer;
+        position: absolute;
+        right: 0.75rem;
+        top: 0.5rem;
+    }
+
+header.masthead {
+    padding-top: 10.5rem;
+    padding-bottom: 6rem;
+    text-align: center;
+    color: #fff;
+    background-image: url(../images/houtpop2.PNG);
+    background-repeat: no-repeat;
+    background-attachment: scroll;
+    background-position: center;
+    background-size: cover;
+}
+
+    header.masthead .masthead-subheading {
+        font-weight: 400;
+        text-align: left;
+        font-size: 1.5rem;
+        line-height: 1.5rem;
+        margin-bottom: 25px;
+    }
+
+    header.masthead .masthead-heading {
+        font-weight: 900;
+        text-align: left;
+        font-size: 2rem;
+        line-height: 3.25rem;
+        margin-bottom: 2rem;
+    }
+
+.nav-item {
+    padding-right: 3em;
+}
+
+
+@media (max-width: 600px) {
+    header.masthead {
+        background-image: url(../images/houtpop2.PNG);
+        background-position: left;
+        background-size: cover;
+    }
+}

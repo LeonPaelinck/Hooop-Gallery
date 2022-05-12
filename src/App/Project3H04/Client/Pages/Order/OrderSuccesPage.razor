@@ -1,0 +1,45 @@
+﻿@page "/ordersuccessful/{id:int}"
+@attribute [AllowAnonymous]
+@inject PublicClient client
+
+<body>
+    @if (pageLoading) { 
+        <p></p>
+    }
+            else { 
+    @if (OrderSucces)
+    {
+        <div class="container">
+            <div class="row mt-5 justify-content-center">
+                <div class="col-sm-10 col-lg-5">
+                    <img src="/images/undraw_order_confirmed.svg" style="width:100%" />
+                </div>
+            </div>
+            <div class="row justify-content-center">
+                <h3>Thank you for your order!</h3>
+            </div>
+        </div>
+    }
+    else
+
+    {
+        <h1>Your order was cancelled</h1>
+    }
+    }
+
+</body>
+
+@code {
+
+    [Parameter] public int Id { get; set; }
+    public bool OrderSucces { get; set; }
+    public bool pageLoading = true;  //bestellingGeslaagd is default false , which could cause the page to show a wrong message for a split second. There's probably a better way to fix this...
+
+
+    protected override async Task OnParametersSetAsync()
+    {
+        OrderSucces = await client.Client.GetFromJsonAsync<bool>($"api/Order/exists/{Id}");
+        pageLoading = false;
+    }
+}
+

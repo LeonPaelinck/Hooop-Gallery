@@ -1,0 +1,66 @@
+﻿@page "/auction/{id:int}"
+@inject Services.KunstwerkService kunstwerkService
+@inject Services.VeilingService veilingService
+
+<AuthorizeView>
+    <div class="container-fluid">
+        @if (_kunstwerk == null) {
+            <p>Loading ...</p>
+        }
+        else {
+            @if (!_kunstwerk.IsVeilbaar) {
+                @if (showCreateComponent) {
+                    <CreateAuction forKunstwerk="@_kunstwerk" />
+                }
+                else {
+                    <button @onclick="CreateAuction">Veiling aanmaken</button>
+                }
+            }
+            else {
+                if (_veiling == null) {
+                    <p>Loading ...</p>
+                }
+                else {
+
+                    @if (showEditComponent) {
+                        <EditAuction Veiling="@_veiling"/>
+                    }
+                    else {
+                        <button @onclick="EditAuction">Veiling bewerken</button>
+                    }
+                }
+            }
+        }
+    </div>
+</AuthorizeView>
+
+@code {
+    [Parameter] public int Id { get; set; }
+    private Kunstwerk_DTO.Detail _kunstwerk;
+    private Veiling_DTO _veiling;
+    bool showEditComponent, showCreateComponent = false;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var response = await kunstwerkService.GetDetailAsync(Id);
+        _kunstwerk = response.Kunstwerk;
+        if (_kunstwerk.IsVeilbaar)
+        {
+            _veiling = await veilingService.GetDetailAsync(_kunstwerk.Id);
+            EditAuction();
+        }
+        else {
+            CreateAuction();
+        }
+    }
+
+    private void CreateAuction() {
+        showEditComponent = false;
+        showCreateComponent = true;
+    }
+
+    private void EditAuction() {
+        showEditComponent = true;
+        showCreateComponent = false;
+    }
+}

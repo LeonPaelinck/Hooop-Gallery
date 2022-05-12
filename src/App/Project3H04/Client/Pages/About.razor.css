@@ -1,0 +1,24 @@
+﻿p.title {
+    font-weight: 700;
+    font-size: 28px;
+    margin: 0;
+    text-align: right;
+    line-height: 120%;
+}
+
+p.subtitle {
+    font-weight: 500;
+    font-size: 16px;
+    margin-bottom: 0px !important;
+}
+
+.card {
+    background-color: rgba(189, 176, 171, 1);
+    border: none;
+}
+
+@media (max-width: 992px) {
+    p.title {
+        text-align: center;
+    }
+}

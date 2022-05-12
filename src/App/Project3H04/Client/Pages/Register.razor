@@ -1,0 +1,132 @@
+﻿@page "/register"
+<!--inject HttpClient Http -->
+@inject PublicClient httpClient
+@inject NavigationManager NavigationManager
+@inject SignOutSessionStateManager SignOutManager
+@inject IConfiguration Configuration
+@inject IJSRuntime JsRuntime
+@inject ISidepanelService sidepanel
+
+@using Microsoft.Extensions.Configuration
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@using Newtonsoft.Json
+@using Project3H04.Shared.Klant 
+
+<h3>Sign up</h3>
+<EditForm Model="klant" OnValidSubmit="CompleteRegistration">
+    <FluentValidationValidator />
+    <ValidationSummary />
+    @*@if (passwordValidationMessage is not null) {
+            <p class="alert-danger">passwordValidationMessage</p>
+        }*@
+
+    <div class="form-group">
+        <label for="name">Email:</label>
+        <InputText type="email" id="email" aria-describedby="nameHelp" class="form-control" @bind-Value="@klant.Email" placeholder="Your Email"></InputText>
+        <p class="alert-danger">
+            @_resultMessage
+        </p>
+    </div>
+    <div class="form-group">
+        <label for="name">Password:</label>
+        <InputText type="password" id="password" aria-describedby="nameHelp" class="form-control" @bind-Value="@password" @oninput="OnPasswordSet" placeholder="Your Password"></InputText>
+        @if (!string.IsNullOrEmpty(passwordValidationMessage))
+        {
+            <p class="alert-danger">@passwordValidationMessage</p>
+        }
+    </div>
+
+    <div class="form-group">
+        <label for="name">Username:</label>
+        <InputText id="gebruikersnaam" aria-describedby="nameHelp" class="form-control" @bind-Value="@klant.Gebruikersnaam" placeholder="Your username"></InputText>
+    </div>
+    <div class="form-group">
+        <label for="name">Birthdate:</label>
+        <InputDate id="geboortedatum" aria-describedby="nameHelp" class="form-control" @bind-Value="@klant.GeboorteDatum"></InputDate>
+    </div>
+    <div class="form-group">
+        <label for="name">Your additional details:</label>
+        <InputTextArea id="details" aria-describedby="nameHelp" class="form-control" @bind-Value="@klant.Details"></InputTextArea>
+    </div>
+
+    @if (password.Length >= 5)
+    {
+        <button type="submit" id="BtnSave" class="btn btn-primary">Complete registration</button>
+    }
+   
+    <button type="reset" id="BtnCancel" class="btn btn-secondary" @onclick="@(() => OnCancel())">Cancel ...</button>
+</EditForm>
+
+<p>Want to publish your art? &nbsp; <a href="mailto: miekegalle@gmail.com" style="text-decoration:none">Please contact us</a></p>
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationStateTask { get; set; }
+    private Klant_DTO klant = new Klant_DTO();
+
+    private string password = string.Empty;
+    private string passwordValidationMessage= string.Empty;
+
+    string _resultMessage;
+    //string _userId;
+
+    private async Task CompleteRegistration()
+    {
+        //register link naar deze pagina nog zetten
+        //de user ophalen uit auth
+        //  var user = (await authenticationStateTask).User;
+
+        Console.WriteLine(klant.Email);
+
+        var res = await httpClient.Client.PostAsJsonAsync<Klant_DTO>("api/Klant", klant);
+        var klantResponse = await res.Content.ReadFromJsonAsync<KlantResponse.Create>();
+        var k = klantResponse.Message;
+        Console.WriteLine(k);
+        if (k == "fail")
+        {
+            _resultMessage = "Email already being used!";
+            //await JsRuntime.InvokeAsync<object>("alert", "Email already being used!");
+        }
+        else
+        {
+            //client service
+            var url = $"{Configuration["Auth0:Authority"]}/dbconnections/signup";
+            var c = new HttpClient();
+            var request = new
+            {
+                client_id = Configuration["Auth0:ClientId"],
+                email = klant.Email,
+                password = password,
+                connection = "Username-Password-Authentication"
+            };
+
+            var response = await c.PostAsJsonAsync<object>(url, request);
+            var s = await response.Content.ReadAsStringAsync();
+            Console.WriteLine(s);
+
+            sidepanel.Close();
+            NavigationManager.NavigateTo("/");
+
+            // await JsRuntime.InvokeAsync<object>("alert", "User signed up!");
+        }
+    }
+   
+    private void OnPasswordSet()
+    {
+        // Do Validation
+        if (password.Length < 5 || string.IsNullOrEmpty(password))
+        {
+            passwordValidationMessage = "Password must have atleast 5 characters";
+        }
+        else
+            passwordValidationMessage = string.Empty;
+    }
+
+    protected void OnCancel()
+    {
+        NavigationManager.NavigateTo("/");
+    }
+}
+
+
+

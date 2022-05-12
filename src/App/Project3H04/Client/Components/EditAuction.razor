@@ -1,0 +1,82 @@
+﻿@using System.Security.Claims
+@inject Services.VeilingService veilingService
+@inject NavigationManager NavManager
+@using Blazored.FluentValidation
+
+<h3>Edit auction</h3>
+@if (Veiling == null)
+{
+    <p>Loading ...</p>
+}
+else
+{
+    <div class="main">
+        <p>
+            Edit auction for the following artwork: @Veiling.Kunstwerk.Naam
+            <br />
+        </p>
+
+        <EditForm Model="@Veiling" OnValidSubmit="@EditExistingAuction">
+            <FluentValidationValidator />
+            <ValidationSummary />
+            <div class="form-group">
+                <label for="@Veiling.StartDatum">Start date</label>
+                <InputDate @bind-Value="@Veiling.StartDatum" class="form-control" />
+            </div>
+            <div class="form-group">
+                <label for="@Veiling.EindDatum">End date</label>
+                <InputDate @bind-Value="@Veiling.EindDatum" class="form-control" />
+            </div>
+            <div class="form-group">
+                <label for="@Veiling.MinPrijs">Minimum price</label>
+                <InputNumber @bind-Value="@Veiling.MinPrijs" class="form-control" />
+            </div>
+            <button type="submit" class="btn btn-primary">
+                <span>Edit</span>
+                @if (loading)
+                {
+                    <TinySpinner />
+                }
+            </button>
+            <button class="btn btn-secondary" @onclick="@NavigateBack">
+                <i class="fas fa-chevron-left"></i>
+                <span>Cancel</span>
+            </button>
+        </EditForm>
+    </div>
+
+    @if (isGelukt)
+    {
+        <p>Added auction</p>
+    }
+}
+
+@code {
+    [Parameter]
+    public Veiling_DTO Veiling { get; set; }
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationStateTask { get; set; }
+    private ClaimsPrincipal user;
+    private bool isGelukt = false;
+    private bool loading = false;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        user = (await authenticationStateTask).User;
+    }
+
+    private async Task EditExistingAuction()
+    {
+        loading = true;
+
+        await veilingService.EditVeilingAsync(Veiling);
+
+        isGelukt = true;
+        NavigateBack();
+    }
+
+    private void NavigateBack()
+    {
+        NavManager.NavigateTo($"artworks/{Veiling.Kunstwerk.Id}");
+    }
+}

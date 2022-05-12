@@ -1,0 +1,74 @@
+﻿@page "/"
+<!--AUTH-->
+@attribute [AllowAnonymous]
+<!--=> Deze http PublicClient gebruiken voor Anonymous-->
+@inject Services.KunstenaarService KunstenaarService
+@inject ISidepanelService Sidepanel
+<header class="masthead">
+    <div class="container">
+        <div class="masthead-heading">showcase, connect and inspire!</div>
+        <div class="masthead-subheading">join us and show your work to the world</div>
+        <AuthorizeView>
+            <NotAuthorized>
+                <div style="text-align: left;"><button class="btn btn-light btn-xl" @onclick="OpenSidepanel" style="border-radius: 25px; padding-left: 40px;padding-right: 40px; ">Sign up</button></div>
+            </NotAuthorized>
+        </AuthorizeView>
+    </div>
+</header>
+<body>
+
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                <p class="black-style">recently joined artists </p>
+            </div>
+        </div>
+        <div class="row">
+            @if (kunstenaars != null)
+            {
+                @foreach (var kunstenaar in kunstenaars)
+                {
+                    <div class="col-lg-3 col-6" data-test-id="recentlyjoined">
+                        <a href="artists/@kunstenaar.GebruikerId" style="text-decoration:none !important;color:black">
+                            <div>
+
+                                <div class="image"><img src="@kunstenaar.Fotopad" alt="" style="width: 100%; height:auto"></div>
+                                <p class="artistname" style="font-weight:400">@kunstenaar.Gebruikersnaam</p>
+
+                            </div>
+                        </a>
+                    </div>
+                }
+            }
+        </div>
+        <div class="row">
+            <div class="col">
+                <a class="btn btn-light btn-xl" href="artists" style="border-radius: 25px; padding-left: 30px;padding-right: 30px; border-color: brown;">browse all artists</a>
+            </div>
+        </div>
+    </div>
+    <footer>
+        <br>
+        <br>
+        <br>
+    </footer>
+</body>
+
+@code{
+    private List<Kunstenaar_DTO> kunstenaars;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        KunstenaarRequest.Index request = new() { Term = "", RecentArtists = true, Take = 4 };
+        var response = await KunstenaarService.GetIndexAsync(request);
+        kunstenaars = response.Kunstenaars;
+    }
+
+    public void OpenSidepanel()
+    {
+        Sidepanel.Open<Register>("");
+
+    }
+
+}

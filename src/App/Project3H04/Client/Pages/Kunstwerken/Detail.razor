@@ -1,0 +1,25 @@
+﻿@page "/artworks/{id:int}"
+<!--AUTH-->
+@attribute [AllowAnonymous]
+@inject Services.KunstwerkService kunstwerkService
+
+@if (_kunstwerk == null)
+{
+    <!--<LoadingSpinner />-->
+}
+else
+{
+<DetailArtwork Kunstwerk="@_kunstwerk" />
+}
+
+
+@code {
+    [Parameter] public int Id { get; set; }
+    private Kunstwerk_DTO.Detail _kunstwerk;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var response = await kunstwerkService.GetDetailAsync(Id);
+        _kunstwerk = response.Kunstwerk;
+    }
+}

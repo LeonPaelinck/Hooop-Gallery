@@ -1,0 +1,51 @@
+﻿@using System.Security.Claims
+@using Project3H04.Shared.Order
+@inject HttpClient httpClient
+
+<h3>Subscriptions</h3>
+
+@if (abonnementen == null || abonnementTypes == null || activeAbo == null) {
+    <p>Loading...</p>
+} else if (abonnementTypes.Count == 0) {
+    <p>No subscription types found</p>
+} else {
+    <div class="container">
+        @foreach (var abo in abonnementTypes) {
+            var isActive = abo.Naam.Equals(activeAbo.AbonnementType.Naam);
+            <CascadingValue Value="this">
+                <SubscriptionTypeCard abonnementType=abo isActive=isActive abonnement=activeAbo /> 
+            </CascadingValue>
+        }
+    </div>
+}
+
+@code {
+    private List<Abonnement_DTO> abonnementen;
+    private List<AbonnementType_DTO> abonnementTypes;
+    private Abonnement_DTO activeAbo;
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationStateTask { get; set; }
+    private ClaimsPrincipal user;
+
+    protected override async Task OnInitializedAsync()
+    {
+        user = (await authenticationStateTask).User;
+        await Refresh();
+    }
+
+    private async Task<bool> Refresh() {
+        var abo = await httpClient.GetFromJsonAsync<IEnumerable<Abonnement_DTO>>($"api/Abonnement/");
+        abonnementen = abo.ToList();
+        var aboTypes = await httpClient.GetFromJsonAsync<IEnumerable<AbonnementType_DTO>>($"api/Abonnement/GetTypes/");
+        abonnementTypes = aboTypes.ToList();
+
+        var k = await httpClient.GetFromJsonAsync<KunstenaarResponse.Detail>($"api/Kunstenaar/byEmail/"+user.Identity.Name);
+        activeAbo = k.Kunstenaar.Abonnement;
+        return true;
+    }
+
+    public async void RefreshState(){
+        await Refresh();
+        this.StateHasChanged();
+    }
+}

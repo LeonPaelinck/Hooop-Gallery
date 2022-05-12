@@ -1,0 +1,371 @@
+﻿@page "/artworks"
+@inject Services.KunstwerkService KunstwerkService 
+<!--AUTH-->
+@attribute [AllowAnonymous]
+
+<head>
+    <link rel="stylesheet" href="_content/LoreSoft.Blazor.Controls/BlazorControls.css" />
+</head>
+<body>
+    <div class="container">
+
+        <div class="row">
+            <div class="col">
+                <div class="collapsable-filter-container">
+                    <button class="btn" type="button" data-toggle="collapse" data-target="#filterCollapse" aria-expanded="false" aria-controls="filters">
+                        filters
+                        <i class="bi bi-filter"></i>
+                    </button>
+
+                </div>
+                <div class="collapse" id="filterCollapse">
+                    <div class="card card-body">
+                        <ul>
+                            <li>
+                                <input type="checkbox" checked>
+                                <i></i>
+                                <h2>Artists</h2>
+                                <div class="checkbox">
+                                    <input @bind="filter.ArtistSearchterm" type="search" style="width:100%" placeholder="Artist Name" />
+                                </div>
+                            </li>
+                            <li>
+                                <input type="checkbox" checked>
+                                <i></i>
+                                <h2>Artworks</h2>
+                                <div class="checkbox">
+                                    <input @bind="filter.ArtworkSearchterm" type="search" style="width:100%" placeholder="Artwork Name" />
+                                </div>
+                            </li>
+                            <li>
+                                <input type="checkbox" checked>
+                                <i></i>
+                                <h2>Medium</h2>
+                                <div class="checkbox">
+                                    @if (kunstwerken != null)
+                                    {
+                                        @foreach (var medium in artMediums)
+                                        {
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" value="@medium" id="flexCheckDefault2{@medium}" @onchange='_ => BindCheckboxes(_,filterPayOption:medium)'>
+                                                <label class="form-check-label" for="flexCheckDefault2{@medium}">
+                                                    @medium
+                                                </label>
+                                            </div>
+                                        }
+                                    }
+                                </div>
+                            </li>
+                            <li>
+                                <input type="checkbox" checked>
+                                <i></i>
+                                <h2>Ways to buy</h2>
+                                <div class="checkbox">
+
+                                    @if (kunstwerken != null)
+                                    {
+
+                                        @foreach (var payOption in payOptions)
+                                        {
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" value="@payOption" id="payOptions2{@payOption}" @onchange='_ => BindCheckboxes(_,filterMedium:payOption)'>
+                                                <label class="form-check-label" for="payOptions2{@payOption}">
+                                                    @payOption
+                                                </label>
+                                            </div>
+
+                                        }
+                                    }
+
+                                </div>
+                            </li>
+                            <li>
+                                <input type="checkbox" checked>
+                                <i></i>
+                                <h2>Price</h2>
+                                <div class="checkbox">
+                                    <input @bind="filter.MinimumPrice" type="search" placeholder="low" />  to
+                                    <input @bind="filter.MaximumPrice" type="search" placeholder="high" />
+                                </div>
+                            </li>
+                            <li>
+                                <input type="checkbox" checked>
+                                <i></i>
+                                <h2>Size</h2>
+                                <div class="checkbox">
+
+                                    @if (kunstwerken != null)
+                                    {
+                                        @foreach (var size in artSizes)
+                                        {
+                                            <div class="form-check">
+
+                                                <input class="form-check-input" type="checkbox" name="size-checkbox" @onchange="_ => BindCheckboxes(_,filterSize:size)">
+                                                <label class="form-check-label">
+                                                    @size
+                                                </label>
+                                            </div>
+                                        }
+                                    }
+
+                                </div>
+
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 col-lg-4">
+                <div class="filter-container">
+                    <!--Filters-->
+                    <ul>
+                        <li>
+                            <input type="checkbox" checked>
+                            <i></i>
+                            <h2>Artists</h2>
+                            <div class="checkbox">
+                                <input data-test-id="artistsearch" @bind="filter.ArtistSearchterm" type="search" style="width:100%" placeholder="Artist Name" />
+                            </div>
+                        </li>
+                        <li>
+                            <input type="checkbox" checked>
+                            <i></i>
+                            <h2>Artworks</h2>
+                            <div class="checkbox">
+                                <input data-test-id="artworksearch" @bind="filter.ArtworkSearchterm" type="search" style="width:100%" placeholder="Artwork Name" />
+                            </div>
+                        </li>
+                        <li>
+                            <input type="checkbox" checked>
+                            <i></i>
+                            <h2>Medium</h2>
+                            <div class="checkbox">
+                                @if (kunstwerken != null)
+                                {
+                                    @foreach (var medium in artMediums)
+                                    {
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" value="@medium" id="flexCheckDefault{@medium}" @onchange='_ => BindCheckboxes(_,filterMedium:medium)'>
+                                            <label class="form-check-label" for="flexCheckDefault{@medium}">
+                                                @medium
+                                            </label>
+                                        </div>
+                                    }
+                                }
+
+                            </div>
+                        </li>
+                        <li>
+                            <input type="checkbox" checked>
+                            <i></i>
+                            <h2>Ways to buy</h2>
+                            <div class="checkbox">
+
+                                @if (kunstwerken != null)
+                                {
+
+                                    @foreach (var payOption in payOptions)
+                                    {
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" value="@payOption" id="payOptions{@payOption}" @onchange='_ => BindCheckboxes(_,filterPayOption:payOption)'>
+                                            <label class="form-check-label" for="payOptions{@payOption}">
+                                                @payOption
+                                            </label>
+                                        </div>
+                                    }
+                                }
+
+                            </div>
+                        </li>
+                        <li>
+                            <input type="checkbox" checked>
+                            <i></i>
+                            <h2>Price</h2>
+                            <div class="checkbox">
+                                <input data-test-id="minPrice" @bind="filter.MinimumPrice" type="search" placeholder="low" />  to
+                                <input data-test-id="maxPrice" @bind="filter.MaximumPrice" type="search" placeholder="high" />
+                            </div>
+                        </li>
+                        <li>
+                            <input type="checkbox" checked>
+                            <i></i>
+                            <h2>Size</h2>
+                            <div class="checkbox">
+
+                                @if (kunstwerken != null)
+                                {
+                                    @foreach (var size in artSizes)
+                                    {
+                                        <div class="form-check">
+
+                                            <input class="form-check-input" type="checkbox" name="size-checkbox" @onchange="_ => BindCheckboxes(_,filterSize:size)">
+                                            <label class="form-check-label">
+                                                @size
+                                            </label>
+                                        </div>
+                                    }
+                                }
+
+                            </div>
+
+                        </li>
+                    </ul>
+                    <div class="row mt-2">
+                        <div class="paging" style="display:flex;align-items:center;justify-content:center">
+                            <button class="btn" @onclick="PrevPage" disabled="@HasNoPrev">Prev</button>
+                            <p class="artwork" style="padding:5px"> page: @filter.Page</p>
+                            <button class="btn" @onclick="NextPage" disabled="@HasNoNext">Next</button>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+
+                <div class="row">
+
+                    @if (kunstwerken != null)
+                    {
+                        @foreach (var kunst in kunstwerken)
+                        {
+                            <div class="col-md-12 col-lg-6" data-test-id="kunstwerk">
+                                <a href="artworks/@kunst.Id" style="text-decoration:none">
+
+                                    <img src="@kunst.HoofdFoto.Pad" alt="@kunst.HoofdFoto.Pad" style="width:100%" />
+                                    <div class="artwork-text">
+                                        <p class="artistname">@kunst.Kunstenaar.Gebruikersnaam</p>
+                                        <p class="artwork">@kunst.Naam</p>
+                                        <p class="price">
+                                            €@kunst.Prijs &nbsp;                                         
+                                        </p>
+
+                                    </div>
+
+                                </a>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+        <div class="row filter-mobile">
+            <div class="paging" style="display:flex;align-items:center;justify-content:center">
+                <button class="btn" @onclick="PrevPage" disabled="@HasNoPrev">Prev</button>
+                <p class="artwork" style="padding:5px"> page: @filter.Page</p>
+                <button class="btn" @onclick="NextPage" disabled="@HasNoNext">Next</button>
+            </div>
+        </div>
+    </div>
+</body>
+
+@code {
+    public IEnumerable<string> artMediums;
+    public IEnumerable<string> artSizes;
+    public IEnumerable<string> payOptions;
+
+    private List<Kunstwerk_DTO.Detail> kunstwerken;
+    private List<Kunstwerk_DTO.Detail> kunstCopy;
+    private int aantalKunst;
+
+    private List<String> selectedMediums = new();
+    private List<String> selectedSizes = new();
+    private List<String> selectedPayOptions = new();
+
+    private ArtworkFilter filter = new();
+
+    public int TotalPages;
+    public bool HasNoPrev => !(filter.Page > 0);
+    public bool HasNoNext => !(filter.Page < TotalPages - 1);
+
+    protected override async Task OnInitializedAsync()
+    {
+        //voor paging
+        aantalKunst = await KunstwerkService.GetAantalKunstAsync(); Console.WriteLine("aantalKunst: " + aantalKunst);
+        TotalPages = (int)Math.Ceiling(aantalKunst / (double)4);
+
+        var response = await KunstwerkService.GetIndexAsync();
+        kunstwerken = response.Kunstwerken;
+        kunstCopy = kunstwerken;
+        //vul artMediums met alle mogelijke mediums van kunstwerken
+        artMediums = kunstCopy.Select(x => x.Materiaal).Distinct();
+        //vul artSizes met alle mogelijke groottes van kunstwerken
+        artSizes = new List<string> { "Small", "Medium", "Large" };
+        payOptions = new List<string> { "Buy", "Bid" };
+        //subscribe
+        filter.OnArtworkFilterChanged += FilterArtworksAsync;
+    }
+
+    public void Dispose()
+    { // If we don't do this, we'll have memory leaks.
+        filter.OnArtworkFilterChanged -= FilterArtworksAsync;
+    }
+
+    private void BindCheckboxes(ChangeEventArgs args, string filterMedium = "", string filterSize = "", string filterPayOption = "")
+    {
+        //selectedMediums
+        if (filterMedium != "")
+        {
+            if (!selectedMediums.Contains(filterMedium))
+                selectedMediums.Add(filterMedium);
+            else selectedMediums.Remove(filterMedium);
+            filter.Mediums = selectedMediums;
+        }
+
+
+
+        //selectedSizes
+        if (filterSize != "")
+        {
+            if (!selectedSizes.Contains(filterSize))
+                selectedSizes.Add(filterSize);
+            else selectedSizes.Remove(filterSize);
+            filter.Sizes = selectedSizes;
+        }
+
+
+
+        //selectedSizes
+        if (filterPayOption != "")
+        {
+            if (!selectedPayOptions.Contains(filterPayOption))
+                selectedPayOptions.Add(filterPayOption);
+            else selectedPayOptions.Remove(filterPayOption);
+            filter.BuyingOptions = selectedPayOptions;
+        }
+
+
+    }
+
+    private async void FilterArtworksAsync()
+    {
+        Kunstwerk_DTO.Filter request = new()
+        {
+            Naam = filter.ArtworkSearchterm,
+            MinimumPrijs = filter.MinimumPrice,
+            MaximumPrijs = filter.MaximumPrice,
+            Materiaal = filter.Mediums,
+            Grootte = filter.Sizes,
+            Kunstenaar = filter.ArtistSearchterm,
+            BetaalOpties = filter.BuyingOptions,
+            Page = filter.Page
+        };
+        var response = await KunstwerkService.GetIndexAsync(request);
+        kunstwerken = response.Kunstwerken;
+        StateHasChanged(); // Since it's not a UI-event.
+    }
+
+    public void NextPage()
+    {
+        filter.Page += 1;
+        Console.WriteLine("page:" + filter.Page);
+    }
+    public void PrevPage()
+    {
+        filter.Page -= 1;
+        Console.WriteLine("page:" + filter.Page);
+    }
+}
+

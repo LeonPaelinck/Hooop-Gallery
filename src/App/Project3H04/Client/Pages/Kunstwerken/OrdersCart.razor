@@ -1,0 +1,72 @@
+﻿@page "/OrdersCart"
+<!--AUTH-->
+@attribute [Authorize]
+@inject HttpClient httpClient
+<!--inject IOrderService orderService-->
+@inject CartState cartState
+<body>
+    <div class="container">
+
+        <p class="black-style">Cart</p>
+
+
+
+        @if (kunstwerken.Count == 0)
+        {
+            <h5>No artworks in cart at the moment.</h5>
+        }
+        else
+        {
+            @foreach (var kunst in kunstwerken)
+            {
+                <div class="row mb-4" data-test-id="cartitem">
+                    <div class="col">
+                        <a href="artworks/@kunst.Id" style="text-decoration:none"> </a>
+                        <img src="@kunst.Fotos.First().Pad" alt="" style="width:100%" />
+                    </div>
+                    <div class="col-md-7 col-lg-10">
+                        <div class="artwork-text">
+                            <p class="artwork">@kunst.Naam</p>
+                            <p class="price">€@kunst.Prijs</p>
+                            <p>Amount: @kunstwerken.Count(x => x.Id == kunst.Id)</p>
+                        </div>
+                        <a class="btn btn-secondary" data-test-id="removebutton" @onclick="_ =>RemoveFromCart(kunst)">Remove</a>
+                    </div>
+                </div>
+            }
+            <div class="row justify-content-end">
+                <a class="btn btn-outline-primary" href="/checkout">Confirm Order</a>
+            </div>
+        }
+
+
+    </div>
+</body>
+
+<!--=>>>Elk kunstwerk maar 1 x koopbaar !!!-->
+
+@code {
+
+    //Kunstwerk_DTO.Detail kunst
+    private List<Kunstwerk_DTO.Detail> kunstwerken;
+    //private List<Kunstwerk_DTO.Detail> kunstwerken => orderService.GetCartKunstwerken().Add(new Kunstwerk_DTO.Detail);
+
+
+    // Console.WriteLine(kunstwerken);
+    protected override void OnInitialized()
+    {
+        //kunstwerken = await httpClient.GetFromJsonAsync<List<Kunstwerk_DTO.Index>>($"api/Kunstwerk?term={searchterm}");
+        kunstwerken = cartState.GetCart();
+    }
+
+    //orderservice/cart 1ke aangemaakt en door alle toegankelijk door in shared?
+
+    //hiervoor btn nog met eventhandler
+    private void RemoveFromCart(Kunstwerk_DTO.Detail kunstwerk)
+    {
+        cartState.RemoveKunstwerk(kunstwerk);
+        //kunstwerken = orderService.GetCartKunstwerken();
+        OnInitialized();
+    }
+
+}

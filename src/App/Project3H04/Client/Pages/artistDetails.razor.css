@@ -1,0 +1,50 @@
+﻿.testimonial-group > .row {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+}
+
+    .testimonial-group > .row > .col-4{
+        display: inline-block;
+    }
+a {
+    display: inline-block;
+}
+
+/*
+    .rounded-circle {
+    border: 1px solid;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+}
+
+*/
+.image {
+    position: relative;
+    overflow: hidden;
+    padding-bottom: 100%;
+}
+
+    .image img {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+/*.rounded-image {
+    position: relative;
+    overflow: hidden;
+    padding-bottom: 100%;
+    height: auto;
+    width: 30%;
+    border-radius: 50%;
+}
+    .rounded-image img {
+        position: absolute;
+        width: 100%;
+        height: 100%;*/
+        /*        width: 100px;
+        height: auto;*/
+        /*object-fit: cover;
+    }*/

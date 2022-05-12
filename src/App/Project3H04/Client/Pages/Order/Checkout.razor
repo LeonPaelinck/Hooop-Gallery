@@ -1,0 +1,96 @@
+﻿@page "/checkout"
+@inject CartState Cartstate
+@inject HttpClient httpClient
+@using Project3H04.Shared.DTO
+@using Blazored.FluentValidation
+@using Mollie.Api.Client.Abstract
+@using Mollie.Api.Client
+@using Mollie.Api.Models
+@using Mollie.Api.Models.Payment.Request
+@using Mollie.Api.Models.Payment.Response
+@inject NavigationManager NavManager
+<div class="container-fluid">
+    <h3>Checkout</h3>
+
+    <EditForm Model="@Bestelling" OnValidSubmit="@Submit">
+        <FluentValidationValidator />
+        <ValidationSummary />
+        @if (Cartstate.Cart.Count == 0)
+        {
+            <h3>your cart is empty...</h3>
+        }
+        else
+        {
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="straat">Street</label>
+                        <InputText id="straat" @bind-Value="Bestelling.Straat" class="form-control" />
+                    </div>
+                    <div class="form-group">
+                        <label for="postcode">Postal code</label>
+                        <InputText id="postcode" @bind-Value="Bestelling.Postcode" class="form-control" />
+                    </div>
+                    <div class="form-group">
+                        <label for="gemeente">City</label>
+                        <InputText id="gemeente" @bind-Value="Bestelling.Gemeente" class="form-control" />
+                    </div>
+                    <div class="form-group">
+                        <label for="gemeente">Country</label>
+                        <InputText id="gemeente" @bind-Value="Bestelling.Land" class="form-control" />
+                    </div>
+                    <button class="btn btn-outline-primary mb-1" type="submit" disabled="@isDisabled">Checkout</button>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            @Cartstate.Cart.Count Items in cart
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-group list-group-flush">
+                                @foreach (var item in Cartstate.Cart)
+                                {
+                                    <li class="list-group-item">
+                                        @(item.Naam)  €@item.Prijs
+                                    </li>
+                                }
+
+                            </ul>
+                        </div>
+                        <div class="card-body">
+                            <hr />
+                            <h5 class="card-title">Total price</h5>
+                            <p class="card-text">€@Cartstate.TotalePrijs</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        }
+
+    </EditForm>
+</div>
+
+
+@code {
+    private Bestelling_DTO.Create Bestelling = new() { };
+    private bool isDisabled = false;
+
+    async Task Submit()
+    {
+        isDisabled = true;
+        Bestelling.TotalePrijs = Cartstate.TotalePrijs;
+        Bestelling.WinkelmandKunstwerken = Cartstate.Cart;
+        Console.WriteLine(Bestelling.TotalePrijs);
+        // var postResponse = await httpClient.PostAsJsonAsync<Bestelling_DTO.Create>($"api/order/persistOrder", Bestelling);
+        //int id = postResponse.Content.ReadFromJsonAsync<int>().Result;
+        var response = await httpClient.PostAsJsonAsync<Bestelling_DTO.Create>($"api/order/Mollie", Bestelling);
+        PaymentResponse paymentresponse = await response.Content.ReadFromJsonAsync<PaymentResponse>();
+        string molliestring = paymentresponse.Links.Checkout.ToString().Substring(12); //prutsen met string voor juiste formaat
+                                                                                       // Bestelling.PaymentId = paymentresponse.Id;
+                                                                                       //Console.WriteLine(paymentresponse.Id);
+        NavManager.NavigateTo(molliestring);
+        //await httpClient.PostAsJsonAsync<Bestelling_DTO.Create>($"api/order/persistOrder", Bestelling);
+    }
+}

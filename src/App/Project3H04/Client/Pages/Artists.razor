@@ -1,0 +1,73 @@
+﻿@page "/artists"
+<!--AUTH-->
+@attribute [AllowAnonymous]
+<!--=> Deze http PublicClient gebruiken voor Anonymous-->
+@inject Services.KunstenaarService KunstenaarService
+<body>
+    <div class="container">
+        <p class="black-style">Artists</p>
+        <div class="row">
+            <div class="col-12 mb-4">
+                <input type="search" data-test-id="artistsearch" placeholder="search artist..." value="@artistSearch" @onchange="SearchArtist" />
+            </div>
+        </div>
+        <div class="row">
+            @if (kunstenaars != null)
+            {
+                @foreach (var kunst in kunstenaars)
+                {
+
+                    <div class="col-lg-4 col-md-6" data-test-id="artists">
+                        <a href="artists/@kunst.GebruikerId" style="text-decoration:none !important;color:black">
+                            <div>
+                                <div class="image"><img src="@kunst.Fotopad" alt="" width="250" /></div>
+                                <p class="artistname" style="font-weight:500">@kunst.Gebruikersnaam</p>
+                            </div>
+                        </a>
+                    </div>
+
+
+
+                }
+
+            }
+            else
+            {
+                <p>Loading ...</p>
+            }
+
+        </div>
+    </div>
+
+</body>
+
+@code {
+
+    private List<Kunstenaar_DTO> kunstenaars;
+    //private List<Kunstenaar_DTO> kunstenaarsCopy;
+    private string artistSearch;
+    protected override async Task OnInitializedAsync()
+    {
+
+        var response = await KunstenaarService.GetIndexAsync(new());
+        kunstenaars = response.Kunstenaars;
+        //kunstenaarsCopy = kunstenaars;
+    }
+
+    private async Task SearchArtist(ChangeEventArgs args)
+    {
+        artistSearch = args.Value.ToString();
+        if (string.IsNullOrEmpty(artistSearch))
+        {
+            var response = await KunstenaarService.GetIndexAsync(new());
+            kunstenaars = response.Kunstenaars;
+        }
+        else
+        {
+            var response = await KunstenaarService.GetIndexAsync(new() { Term = artistSearch });
+            kunstenaars = response.Kunstenaars;
+        }
+    }
+
+}
+

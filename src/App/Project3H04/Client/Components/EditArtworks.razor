@@ -1,0 +1,77 @@
+﻿@inject HttpClient httpCliento
+@inject Services.KunstwerkService kunstwerkService
+@inject Services.KunstenaarService kunstenaarService
+
+
+@inject ISidepanelService Sidepanel
+
+
+<div class="row">
+    @if (kunstenaar.Kunstwerken.Count != 0)
+    {
+        @foreach (Kunstwerk_DTO.Index k in kunstenaar.Kunstwerken)
+        {
+
+            <div class="col-sm-6 col-lg-5 mb-4">
+                <a href="artworks/@k.Id" style="text-decoration:none">
+                    <div class="image">
+                        <img src="@k.HoofdFoto.Pad" />
+                    </div>
+                </a>
+                <p class="artwork">@k.Naam</p>
+
+                <a class="btn btn-light btn-xl" @onclick="(()=>OpenEditSidepanel(k))" style="border-radius: 25px; padding-left: 30px;padding-right: 30px; border-color: brown;">Edit</a>
+                <a class="btn btn-light btn-xl" href="auction/@k.Id" style="border-radius: 25px; padding-left: 30px;padding-right: 30px; border-color: brown;">Manage Auction</a>
+
+            </div>
+        }
+    }
+    else
+    {
+        <p>No artworks found</p>
+    }
+    <div class="col-sm-6 col-lg-5 mb-4">
+        <a class="btn btn-light btn-xl" @onclick="OpenCreateSidepanel" style="border-radius: 25px; padding-left: 30px;padding-right: 30px; border-color: brown;">Create new artwork</a>
+    </div>
+
+</div>
+
+@code {
+    [Parameter] public Kunstenaar_DTO kunstenaar { get; set; }
+
+    private Kunstwerk_DTO.Edit _kunstwerk;
+
+    public async Task OpenEditSidepanel(Kunstwerk_DTO.Index k)
+    {
+        var response = await kunstwerkService.GetDetailAsync(k.Id);
+        _kunstwerk = new Kunstwerk_DTO.Edit(response.Kunstwerk);
+
+        var callback = EventCallback.Factory.Create(this, RedirectPage);
+
+        var parameters = new Dictionary<string, object>
+{
+                //[Parameter] Kunstwerk_DTO.Create
+                { nameof(Components.EditArtwork.Model), _kunstwerk},
+                { nameof(Components.EditArtwork.OnRedirect),callback  }
+        };
+        Sidepanel.Open<Components.EditArtwork>("Edit", "artwork", parameters);
+    }
+
+    private void OpenCreateSidepanel()
+    {
+        Sidepanel.Open<Components.EditArtwork>("Create", "artwork");
+    }
+
+
+    private async Task RedirectPage()
+    {
+        //refresh?
+        var response = await kunstenaarService.GetDetailAsync(new(kunstenaar.GebruikerId));
+        kunstenaar = response.Kunstenaar;
+
+        Sidepanel.Close();
+
+    }
+
+}
+

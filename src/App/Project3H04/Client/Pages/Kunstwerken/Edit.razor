@@ -1,0 +1,43 @@
+﻿@page "/artworks/edit/{id:int}"
+<!--AUTH-->
+@attribute [Authorize]
+@inject NavigationManager NavManager
+@inject Services.KunstwerkService kunstwerkService
+
+<h3>Edit Artwork</h3>
+
+@if (_kunstwerk != null)
+{
+    <EditArtwork Model="@_kunstwerk" OnRedirect=@RedirectPage />
+    <button class="btn btn-secondary" @onclick="@RedirectPage">
+        <i class="fas fa-chevron-left"></i>
+        <span>Cancel</span>
+    </button>
+}
+else
+{
+    <!--<LoadingSpinner/>-->
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+    private Kunstwerk_DTO.Edit _kunstwerk;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        //try //AUTH
+        //{
+        var response = await kunstwerkService.GetDetailAsync(Id);
+        _kunstwerk = new Kunstwerk_DTO.Edit(response.Kunstwerk);
+        //}
+        //catch (AccessTokenNotAvailableException exception)
+        //{
+        //    exception.Redirect();
+        //}
+
+    }
+    private void RedirectPage()
+    {
+        NavManager.NavigateTo($"artworks/{Id}");
+    }
+}

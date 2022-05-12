@@ -1,0 +1,13 @@
+﻿@page "/artworks/create"
+@inject PublicClient httpClient
+<AuthorizeView>
+    <h3>Create Artwork</h3>
+    <EditArtwork />
+    <a class="btn btn-secondary" href="/artworks">
+        <i class="fas fa-chevron-left"></i>
+        <span>Cancel</span>
+    </a>
+</AuthorizeView>
+
+@code {
+}

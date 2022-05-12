@@ -1,0 +1,69 @@
+﻿@using System.Security.Claims
+@inject HttpClient httpClient
+
+<div class="card">
+    <div class="card-header">
+        <h4 style="margin-bottom: 0px;">
+            @abonnementType.Naam
+        </h4>
+    </div>
+    <div class="card-body">
+        @if (isActive)
+        {
+            <span class="tag tag-teal">Current Subscription</span><br />
+        }
+        <p>
+            This subscription is valid for @abonnementType.Verlooptijd month(s).
+        </p>
+        <p style="color: black; font-size: small">
+            € @abonnementType.Prijs
+        </p>
+        <div class="user">
+            <div class="user-info">
+                <AuthorizeView>
+                    @if (isActive)
+                    {
+                        @if (!abonnementType.Naam.Equals("default"))
+                        {
+                            <a @onclick="SetSubscription" class="card-link" style="color: lightcoral; cursor: pointer;">Cancel Subscription</a>
+                        }
+                    }
+                    else
+                    {
+                        <a @onclick="SetSubscription" class="card-link" style="cursor: pointer">Select Subscription</a>
+                    }
+                </AuthorizeView>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public Abonnement_DTO abonnement { get; set; }
+    [Parameter]
+    public AbonnementType_DTO abonnementType { get; set; }
+    [CascadingParameter]
+    public Subscriptions _Parent { get; set; }
+    [Parameter]
+    public bool isActive { get; set; }
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationStateTask { get; set; }
+    private ClaimsPrincipal user;
+
+    protected override async Task OnInitializedAsync()
+    {
+        user = (await authenticationStateTask).User;
+    }
+
+    async void SetSubscription() {
+        var newAbo = new Abonnement_DTO {
+            Id = abonnement.Id,
+            StartDatum = DateTime.UtcNow,
+            EindDatum = DateTime.UtcNow.AddMonths(abonnementType.Verlooptijd),
+            AbonnementType = isActive ? new AbonnementType_DTO {Naam = "default", Prijs = 10, Verlooptijd = 1} : abonnementType,
+        };
+        await httpClient.PutAsJsonAsync<Abonnement_DTO>($"api/Abonnement/UpdateSubscription/", newAbo);
+        _Parent.RefreshState();
+    }
+}

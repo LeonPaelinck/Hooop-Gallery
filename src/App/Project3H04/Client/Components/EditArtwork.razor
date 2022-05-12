@@ -1,0 +1,219 @@
+@inject Services.KunstwerkService KunstwerkService
+@inject Services.StorageService StorageService
+@inject NavigationManager NavManager
+@using Blazored.FluentValidation
+
+
+@if (Model != null)
+{
+    <div class="main">
+        <EditForm Model="@Model" OnValidSubmit="@Submit">
+            <FluentValidationValidator />
+            <ValidationSummary />
+            <div class="form-group">
+                <label for="@Model.Naam">Name</label>
+                <InputText @bind-Value="@Model.Naam" class="form-control" />
+            </div>
+            <div class="form-group">
+                <label for="@Model.Lengte">Length</label>
+                <InputNumber @bind-Value="@Model.Lengte" class="form-control" />
+            </div>
+            <div class="form-group">
+                <label for="@Model.Breedte">Width</label>
+                <InputNumber @bind-Value="@Model.Breedte" class="form-control" />
+            </div>
+            <div class="form-group">
+                <label for="@Model.Hoogte">Height</label>
+                <InputNumber @bind-Value="@Model.Hoogte" class="form-control" />
+            </div>
+            <div class="form-group">
+                <label for="@Model.Gewicht">Weight</label>
+                <InputNumber @bind-Value="@Model.Gewicht" class="form-control" />
+            </div>
+            <!--Fotos-->
+            <EditFotos Fotos="Model.Fotos" ImageFiles="_imagesFiles" />
+            <!--TeKoop?-->
+            <div class="form-group">
+                <label>
+                    For Sale
+                    <InputCheckbox @bind-Value="@Model.TeKoop" />
+                </label>
+            </div>
+            @if (Model.TeKoop)
+            {
+                <div class="form-group">
+                    @if (Model.IsVeilbaar)
+                    {<label for="@Model.Prijs">StartingPrice </label> }
+                    else
+                    { <label for="@Model.Prijs">Price </label>}
+                    <InputNumber @bind-Value="@Model.Prijs" class="form-control" />
+                </div>
+                <!--<div class="form-group">
+                    <label>
+                        Sell by auction?
+                        <InputCheckbox @bind-Value="@Model.IsVeilbaar" />
+                    </label>
+                </div>-->
+            }
+            <div class="form-group">
+                <label for="materiaalInput">Medium</label>
+                <input id="materiaalInput" @bind-value="@Model.Materiaal" list="materiaalId" class="form-control" />
+                <datalist id="materiaalId">
+                    @foreach (var materiaal in _materialen)
+                    {
+                        <option value="@materiaal"></option>
+                    }
+                </datalist>
+
+
+            </div>
+            <div class="form-group">
+                <label for="@Model.Beschrijving">Description</label>
+                <InputTextArea @bind-Value="@Model.Beschrijving" class="form-control" />
+            </div>
+            <button type="submit" class="btn btn-primary">
+                <span>Confirm</span>
+                @if (loading)
+                {
+                    <TinySpinner />
+                }
+            </button>
+            @if (Model is Kunstwerk_DTO.Edit)
+            {
+                <button hidden="@pendingDelete" type="button" class="btn btn-outline-secondary" @onclick="Delete">
+                    Delete Artwork
+                </button>
+                <button hidden="@notPendingDelete" type="button" class="btn btn-secondary" @onclick="CancelDelete">
+                    <i class="fas fa-trash-restore"></i>
+                </button>
+                <button hidden="@notPendingDelete" type="button" class="btn btn-danger" @onclick="DeleteConfirm">
+                    <i class="far fa-trash-alt"></i>
+                </button>
+            }
+
+            <!--<a class="btn btn-secondary" href="/">
+                <i class="fas fa-chevron-left"></i>
+                <span>Cancel</span>
+            </a>-->
+
+        </EditForm>
+    </div>
+    @if (loading)
+    {
+        <LoadingSpinner></LoadingSpinner>
+    }
+}
+else
+{
+    <LoadingSpinner></LoadingSpinner>
+}
+
+
+
+@code{
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationStateTask { get; set; }
+    private string userEmail = string.Empty;
+    //parameter zodat we het ook als Edit formulier kunnen gebruiken
+    [Parameter] public Kunstwerk_DTO.Create Model { get; set; }
+    [Parameter] public EventCallback OnRedirect { get; set; }
+
+    private IList<string> _materialen = new List<string>();
+    private IList<IBrowserFile> _imagesFiles = new List<IBrowserFile>();
+    private bool loading = false;
+    private bool pendingDelete = false;
+    private bool notPendingDelete => !pendingDelete;
+
+    protected override void OnInitialized()
+    {
+        if (Model == null) //in dit geval werkt het als een Create formulier
+        {
+            Model = new();
+        }
+    }
+
+    protected async override Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+        _materialen = await KunstwerkService.GetMaterialenAsync(5);
+
+
+        var user = (await authenticationStateTask).User;
+        userEmail = user.Identity.Name;
+        Model.KunstenaarEmail = userEmail;
+    }
+
+    public async Task Submit()
+    {
+        loading = true;
+        if (!Model.TeKoop)
+        {
+            Model.IsVeilbaar = false; //als het niet te koop is is het ook niet per opbod te koop
+            Model.Prijs = 0; //prijs zou nutteloos zijn als het niet te koop is
+        }
+
+        if (Model is Kunstwerk_DTO.Edit)
+        {
+            //API call "PUT"
+            Kunstwerk_DTO.Edit model = (Kunstwerk_DTO.Edit)Model; //noodzakelijke cast
+
+            var editResponse = await KunstwerkService.EditAsync(model);
+            //images uploaden
+            await StorageService.UploadImagesAsync(editResponse.UploadUris, _imagesFiles);
+
+            await Redirect();
+
+        }
+        else if (Model is Kunstwerk_DTO.Create)
+        {
+
+            //API call "POST"
+            var createResponse = await KunstwerkService.CreateAsync(Model);
+            //images uploaden
+            await StorageService.UploadImagesAsync(createResponse.UploadUris, _imagesFiles);
+
+            NavManager.NavigateTo($"artworks/{createResponse.KunstwerkId}");
+        }
+        else
+        {
+            //Error
+        }
+    }
+
+    private void Delete()
+    {
+        if (Model is Kunstwerk_DTO.Edit)
+        {
+            pendingDelete = true;
+        }
+    }
+
+    private void CancelDelete()
+    {
+        pendingDelete = false;
+    }
+
+    private async Task DeleteConfirm()
+    {
+        if (Model is Kunstwerk_DTO.Edit)
+        {
+            var response = await KunstwerkService.DeleteAsync(((Kunstwerk_DTO.Edit)Model).Id);
+            Console.WriteLine(response.Message);
+            if (response.Deleted)
+            {
+                await Redirect();
+            }
+            else
+            {
+                //kunstwerk cannot be deleted :(
+            }
+        }
+    }
+
+    private async Task Redirect()
+    {
+        //callback
+        await OnRedirect.InvokeAsync();
+    }
+
+}

@@ -1,0 +1,25 @@
+﻿@* Client/Shared/AccessControl.razor *@
+
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+
+@inject NavigationManager Navigation
+@inject SignOutSessionStateManager SignOutManager
+<!--AUTH login en logout btn-->
+<AuthorizeView>
+    <Authorized>
+        <!-- <p data-test-id="username">Hello,  @context.User.Identity.Name! </p> -->
+        <a href="#" style="color: grey !important ; text-decoration:none" @onclick="BeginSignOut">log out</a>
+    </Authorized>
+    <NotAuthorized>
+        <a data-test-id="login" href="authentication/login">log in</a>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code{
+    private async Task BeginSignOut(MouseEventArgs args)
+    {
+        await SignOutManager.SetSignOutState();
+        Navigation.NavigateTo("authentication/logout");
+    }
+}

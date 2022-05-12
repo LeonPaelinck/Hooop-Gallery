@@ -1,0 +1,199 @@
+﻿@page "/account"
+<!--AUTH-->
+@attribute [Authorize]
+@inject HttpClient httpClient
+@inject ISidepanelService Sidepanel
+<div class="container-fluid m-0 vh-100">
+    <div class="row vh-100">
+        <div class="col-sm-12 col-md-3 col-lg-3 p-0">
+            <nav id="sidebar">
+                <div class="row justify-content-center">
+                    <div class="col-6 p-4">
+                        <div class="rounded-circle image">
+                            <img src="@geb.Fotopad" alt="" />
+                        </div>
+                    </div>
+                </div>
+                <ul class="list-unstyled mb-5">
+                    <li>
+                        <a role="button" style="cursor: pointer" @onclick="ShowProfile">profile</a>
+                    </li>
+                    @if (geb is Klant_DTO)
+                    {
+                        <li>
+                            <a role="button" style="cursor: pointer" @onclick="ShowOrders">orders</a>
+                        </li>
+                    }
+                        @*Ik zou gwn zonder links doen en op 1 pagina de info tonen, tis te weinig info om in tabs op te delen*@
+                        @*Enkel abonnement miss*@
+
+                        @if (geb is Kunstenaar_DTO)
+                        {
+                            <li>
+                                <a role="button" style="cursor: pointer" @onclick="ShowSubscriptions">subscriptions</a>
+                            </li>
+                            <!--authorize kunstenaar-->
+                            <li>
+                                <a role="button" style="cursor: pointer" @onclick="ShowArtworks">artworks</a>
+                            </li>
+                        }
+
+                    </ul>
+            </nav>
+        </div>
+        <div class="col-sm-12 col-md-9 col-lg-9 p-3">
+
+            <!--=> Bewerken moet nog !!!-->
+            <!-- Page Content  -->
+            <!--eerst de algemene attributen als geb tonen en dan bv voor bestellingen of kunstwerken te tonen, de klant of kunstenaar obj gebruiken !!!-->
+            <!--algemene dingen tonen met bestellingen en als kunstenaar(AuthorizeView) dan vanonder of een tab om als kunstenaar uw kunstwerken te zien en te editen-->
+            @*<EditAccount GebruikerId="@geb.GebruikerId" gebruiker="@geb" />*@
+            <!--hier de extra als kunstenaar dan zijn kunstwerken tonen-->
+
+            @if (showProfile == true)
+            {
+                @if (editForm == false)
+                {
+
+                    <p> Username: @geb.Gebruikersnaam</p>
+                    <p> Day of birth: @geb.GeboorteDatum.ToShortDateString()</p>
+                    <p> Email: @geb.Email</p>
+                    <p> Details: @geb.Details</p>
+
+                    <button type="button" @onclick="ShowEditForm" class="btn btn-secondary">Edit</button>
+                }
+                else
+                {<!--met sidepanel-->
+                    <EditAccount Model="@geb" OnRedirect="Callback" /><!-- hoe na de edit, de editForm bool terug op false zetten?-->
+                    <button type="reset" id="BtnCancel" class="btn btn-secondary" @onclick="Showgeg">Cancel</button>
+                }
+
+            }
+            @if (showArtworks)
+            {
+                <EditArtworks kunstenaar="@kunst" />
+            }
+            @if (showOrders)
+            {
+                <Orders />
+            }
+            @if (showSubscriptions) {
+                <Subscriptions />
+            }
+
+        </div>
+    </div>
+</div>
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationStateTask { get; set; }
+    private Gebruiker_DTO geb = new Gebruiker_DTO();
+    private Klant_DTO klant = new Klant_DTO();
+    private Kunstenaar_DTO kunst = new Kunstenaar_DTO();
+    private bool editForm = false; //TODO: hoe na de edit, de editForm bool terug op false zetten?
+
+    private bool showArtworks = false;
+    private bool showProfile = true;
+    private bool showOrders = false;
+    private bool showSubscriptions = false;
+
+    //zo geen hard refresh door callback mee te geven aan de edit form
+    //EventCallback callback;
+    protected override async Task OnParametersSetAsync()
+    {
+        //de user ophalen uit auth en kijken welke soort user het is
+        //|| of => user als geb ophalen en dan kijken welke type het is(kunst of klant) en dan de user met authorizeview roles = "Kunstenaar"
+        //voor algemene attributen de geb gebruiken
+
+        var user = (await authenticationStateTask).User;
+        if (user.Identity != null)
+        {
+            Console.WriteLine(user.Identity.Name);
+            Console.WriteLine(user.IsInRole("Kunstenaar"));
+            //Console.WriteLine(user.Claims.FirstOrDefault().Value == "Kunstenaar");
+        }
+        if (user.IsInRole("Kunstenaar"))
+        {
+            var response = await httpClient.GetFromJsonAsync<KunstenaarResponse.Detail>($"api/Kunstenaar/byEmail/{user.Identity.Name}");
+            kunst = response.Kunstenaar;
+            geb = kunst;
+            Console.WriteLine("Kunst");
+        }
+        else
+        {
+            var response = await httpClient.GetFromJsonAsync<KlantResponse.Detail>($"api/Klant/byEmail/{user.Identity.Name}");
+            klant = response.Klant;
+            geb = klant;
+            //Console.WriteLine(klant.Email);
+            Console.WriteLine("Klant");
+        }
+    }
+
+    public void ShowOrders()
+    {
+        showArtworks = false;
+        showProfile = false;
+        showOrders = true;
+        showSubscriptions = false;
+    }
+
+    void ShowSubscriptions() {
+        showArtworks = false;
+        showProfile = false;
+        showOrders = false;
+        showSubscriptions = true;
+    }
+
+    void Callback()
+    {
+        showProfile = true;
+        editForm = false;
+        showArtworks = false;
+        showSubscriptions = false;
+    }
+
+    public void ShowEditForm()
+    {
+        editForm = true;
+        showSubscriptions = false;
+        // callback = EventCallback.Factory.Create(this, RedirectPage);
+    }
+
+    public async Task Showgeg()
+    {
+        editForm = false;
+        await this.OnParametersSetAsync();
+        StateHasChanged();
+    }
+    public void ShowProfile()
+    {
+        showProfile = true;
+        editForm = false;
+        showArtworks = false;
+        showOrders = false;
+        showSubscriptions = false;
+    }
+
+    public void ShowArtworks()
+    {
+        showArtworks = true;
+        showProfile = false;
+        showSubscriptions = false;
+    }
+    /*  private async Task RedirectPage()
+      {
+          this.OnParametersSetAsync();
+
+      }*/
+    //public void OpenEditSidePanel()
+    //{
+    //    var parameters = new Dictionary<string, object>
+    //        {
+    //            { nameof(Components.EditAccount.GebruikerId), geb.GebruikerId },
+    //            { nameof(Components.EditAccount.gebruiker), geb}
+    //        };
+    //    Sidepanel.Open<Components.EditAccount>("", parameters); //lmpao, gg sidepanel
+
+    //}
+}
